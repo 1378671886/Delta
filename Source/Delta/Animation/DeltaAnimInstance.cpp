@@ -42,12 +42,45 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// Velocity
 	Velocity = MovementComponent->Velocity;
+	Acceleration = MovementComponent->GetCurrentAcceleration();
 	GroundSpeed = Velocity.Size2D();
 	bIsMovingOnGround = MovementComponent->IsMovingOnGround();
+	bHasVelocity = GroundSpeed > KINDA_SMALL_NUMBER;
 
 	// Acceleration: true when the character is providing movement input
 	// (not just coasting/decelerating)
 	bHasAcceleration = MovementComponent->GetCurrentAcceleration().SizeSquared() > 0.0f;
+
+	// Local acceleration direction
+	{
+		const FVector Accel2D = MovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
+		const FRotator ActorRotation = Character->GetActorRotation();
+		const FVector LocalDir = ActorRotation.UnrotateVector(Accel2D);
+		LocalAcceleration2D = FVector2D(LocalDir.X, LocalDir.Y);
+
+		// Pivot direction: opposite of acceleration input
+		{
+			const float AccelAngle = FMath::RadiansToDegrees(FMath::Atan2(LocalAcceleration2D.Y, LocalAcceleration2D.X));
+			if (AccelAngle >= -45.0f && AccelAngle <= 45.0f)
+			{
+				PivotDirection = ECardinalDirection::Back;
+			}
+			else if (AccelAngle > 45.0f && AccelAngle <= 135.0f)
+			{
+				PivotDirection = ECardinalDirection::Left;
+			}
+			else if (AccelAngle < -45.0f && AccelAngle >= -135.0f)
+			{
+				PivotDirection = ECardinalDirection::Right;
+			}
+			else
+			{
+				PivotDirection = ECardinalDirection::Front;
+			}
+		}
+	}
+
+	DisplacementSinceLastUpdate = GroundSpeed * DeltaSeconds;
 
 	// Movement direction relative to character facing
 	if (GroundSpeed > KINDA_SMALL_NUMBER)
@@ -64,6 +97,24 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		MovementDirection = 0.0f;
 		LocalVelocity2D = FVector2D::ZeroVector;
+	}
+
+	// Cardinal direction from movement angle
+	if (MovementDirection >= -45.0f && MovementDirection <= 45.0f)
+	{
+		CardinalDirection = ECardinalDirection::Front;
+	}
+	else if (MovementDirection > 45.0f && MovementDirection <= 135.0f)
+	{
+		CardinalDirection = ECardinalDirection::Right;
+	}
+	else if (MovementDirection < -45.0f && MovementDirection >= -135.0f)
+	{
+		CardinalDirection = ECardinalDirection::Left;
+	}
+	else
+	{
+		CardinalDirection = ECardinalDirection::Back;
 	}
 
 	// Gameplay-tag-driven states

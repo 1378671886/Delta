@@ -5,6 +5,15 @@
 #include "Animation/AnimInstance.h"
 #include "DeltaAnimInstance.generated.h"
 
+UENUM(BlueprintType)
+enum class ECardinalDirection : uint8
+{
+	Front	UMETA(DisplayName = "前"),
+	Back	UMETA(DisplayName = "后"),
+	Left	UMETA(DisplayName = "左"),
+	Right	UMETA(DisplayName = "右")
+};
+
 class ADeltaCharacter;
 class UCharacterMovementComponent;
 class UDeltaAbilitySystemComponent;
@@ -30,7 +39,6 @@ public:
 	//~End of UAnimInstance interface
 
 protected:
-	// Cached — set once in NativeInitializeAnimation
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	TObjectPtr<ADeltaCharacter> Character;
 
@@ -40,9 +48,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	TObjectPtr<UDeltaAbilitySystemComponent> AbilitySystemComponent;
 
-	// Updated every frame
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	FVector Velocity;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	FVector Acceleration;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	float GroundSpeed;
@@ -50,27 +60,39 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsMovingOnGround;
 
-	// True when the character is providing input acceleration (has input intent to move)
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	bool bHasVelocity;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bHasAcceleration;
 
-	// Movement direction angle relative to character facing, in degrees [-180, 180].
-	// 0 = forward, 90 = right, -90 = left, +/-180 = backward.
+	//距离匹配 调整显式时间
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	float DisplacementSinceLastUpdate;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	float MovementDirection;
 
-	// Movement direction in local space (relative to actor rotation), normalized.
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	FVector2D LocalVelocity2D;
 
-	// Cached gameplay tag states for anim graph use
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	FVector2D LocalAcceleration2D;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	ECardinalDirection CardinalDirection;
+
+	// Pivot direction from acceleration: opposite of input direction.
+	// Accel backward → Front, Accel left → Right, etc.
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	ECardinalDirection PivotDirection;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsCrouching;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsSprinting;
 
-	// Native tick
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	float DeltaTime;
 };
