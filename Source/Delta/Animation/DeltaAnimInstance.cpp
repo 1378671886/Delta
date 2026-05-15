@@ -11,6 +11,8 @@
 
 UDeltaAnimInstance::UDeltaAnimInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, PreviousActorYaw(0.0f)
+	, RootYawOffsetMode(ERootYawOffsetMode::BlendOut)
 {
 }
 
@@ -25,6 +27,7 @@ void UDeltaAnimInstance::NativeInitializeAnimation()
 		{
 			MovementComponent = Character->GetCharacterMovement();
 			AbilitySystemComponent = Character->GetDeltaAbilitySystemComponent();
+			PreviousActorYaw = Character->GetActorRotation().Yaw;
 		}
 	}
 }
@@ -40,25 +43,24 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	// Velocity
+	// 速度
 	Velocity = MovementComponent->Velocity;
 	Acceleration = MovementComponent->GetCurrentAcceleration();
 	GroundSpeed = Velocity.Size2D();
 	bIsMovingOnGround = MovementComponent->IsMovingOnGround();
 	bHasVelocity = GroundSpeed > KINDA_SMALL_NUMBER;
 
-	// Acceleration: true when the character is providing movement input
-	// (not just coasting/decelerating)
+	// 加速度：角色正在提供移动输入时为 true（而非滑行/减速）
 	bHasAcceleration = MovementComponent->GetCurrentAcceleration().SizeSquared() > 0.0f;
 
-	// Local acceleration direction
+	// 本地加速度方向
 	{
 		const FVector Accel2D = MovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
 		const FRotator ActorRotation = Character->GetActorRotation();
 		const FVector LocalDir = ActorRotation.UnrotateVector(Accel2D);
 		LocalAcceleration2D = FVector2D(LocalDir.X, LocalDir.Y);
 
-		// Pivot direction: opposite of acceleration input
+		// 加速度基准的转身方向：与输入方向相反
 		{
 			const float AccelAngle = FMath::RadiansToDegrees(FMath::Atan2(LocalAcceleration2D.Y, LocalAcceleration2D.X));
 			if (AccelAngle >= -45.0f && AccelAngle <= 45.0f)
@@ -82,14 +84,14 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	DisplacementSinceLastUpdate = GroundSpeed * DeltaSeconds;
 
-	// Movement direction relative to character facing
+	// 相对角色朝向的移动方向
 	if (GroundSpeed > KINDA_SMALL_NUMBER)
 	{
 		const FRotator ActorRotation = Character->GetActorRotation();
 		const FVector VelocityDirection = Velocity.GetSafeNormal2D();
 		const FVector LocalDirection = ActorRotation.UnrotateVector(VelocityDirection);
 
-		// Angle: forward=0, right=90, left=-90
+		// 角度：前=0，右=90，左=-90
 		MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(LocalDirection.Y, LocalDirection.X));
 		LocalVelocity2D = FVector2D(LocalDirection.X, LocalDirection.Y);
 	}
@@ -99,16 +101,31 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		LocalVelocity2D = FVector2D::ZeroVector;
 	}
 
-	// Cardinal direction from movement angle
-	if (MovementDirection >= -45.0f && MovementDirection <= 45.0f)
+	UpdateRootYawOffset(DeltaSeconds);
+
+	AdjustedDirection = MovementDirection - RootYawOffset;
+
+	UpdateCardinalDirection();
+
+	// GameplayTag驱动的状态
+	if (AbilitySystemComponent)
+	{
+		bIsCrouching = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Crouching);
+		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
+	}
+}
+
+void UDeltaAnimInstance::UpdateCardinalDirection()
+{
+	if (AdjustedDirection >= -45.0f && AdjustedDirection <= 45.0f)
 	{
 		CardinalDirection = ECardinalDirection::Front;
 	}
-	else if (MovementDirection > 45.0f && MovementDirection <= 135.0f)
+	else if (AdjustedDirection > 45.0f && AdjustedDirection <= 135.0f)
 	{
 		CardinalDirection = ECardinalDirection::Right;
 	}
-	else if (MovementDirection < -45.0f && MovementDirection >= -135.0f)
+	else if (AdjustedDirection < -45.0f && AdjustedDirection >= -135.0f)
 	{
 		CardinalDirection = ECardinalDirection::Left;
 	}
@@ -116,11 +133,29 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		CardinalDirection = ECardinalDirection::Back;
 	}
+}
 
-	// Gameplay-tag-driven states
-	if (AbilitySystemComponent)
+void UDeltaAnimInstance::UpdateRootYawOffset(float DeltaSeconds)
+{
+	const float CurrentActorYaw = Character->GetActorRotation().Yaw;
+	RootYawDelta = FMath::FindDeltaAngleDegrees(PreviousActorYaw, CurrentActorYaw);
+	PreviousActorYaw = CurrentActorYaw;
+
+	switch (RootYawOffsetMode)
 	{
-		bIsCrouching = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Crouching);
-		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
+	case ERootYawOffsetMode::Accumulate:
+		RootYawOffset = FMath::UnwindDegrees(RootYawOffset - RootYawDelta);
+		//RootYawOffset = FMath::Clamp(RootYawOffset, -120.0f, 120.0f);
+		break;
+	case ERootYawOffsetMode::HoldOn:
+		break;
+	case ERootYawOffsetMode::BlendOut:
+		RootYawOffset = UKismetMathLibrary::FloatSpringInterp(RootYawOffset, 0.0f, RootYawSpringState, 80.0f, 1.0f, DeltaSeconds, 1.0f, 0.5f);
+		//RootYawOffset = FMath::Clamp(RootYawOffset, -120.0f, 120.0f);
+		break;
+	default:
+		break;
 	}
+
+	RootYawOffsetMode = ERootYawOffsetMode::BlendOut;
 }

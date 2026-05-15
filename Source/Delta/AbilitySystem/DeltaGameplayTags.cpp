@@ -16,7 +16,7 @@ namespace DeltaGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Status_AutoRunning, "Status.AutoRunning");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Sprinting, "Status.Sprinting");
 
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Crouch, "Ability.Crouch");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Jump, "Ability.Jump");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint, "Ability.Sprint");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_MovementStopped, "Gameplay.MovementStopped");

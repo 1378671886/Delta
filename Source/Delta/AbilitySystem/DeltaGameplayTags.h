@@ -21,7 +21,7 @@ namespace DeltaGameplayTags
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Sprinting);
 
 	// Ability Tags — used in AbilityTags on GA blueprints for blocking/cancellation
-	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Crouch);
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Jump);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint);
 
 	// Movement control — set by GAS abilities to freeze movement
