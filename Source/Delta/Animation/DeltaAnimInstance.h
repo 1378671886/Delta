@@ -135,6 +135,20 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
 	float TurnInPlaceRotationTime;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	bool bIsJumping = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	bool bIsFalling = false;
+
+	void UpdateJumpFallingState();
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	float JumpApexTime;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	float GroundDistance;
+
 private:
 	float PreviousActorYaw;
 	FFloatSpringState RootYawSpringState;

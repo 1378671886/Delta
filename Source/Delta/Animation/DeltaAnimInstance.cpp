@@ -50,7 +50,6 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Velocity = MovementComponent->Velocity;
 	Acceleration = MovementComponent->GetCurrentAcceleration();
 	GroundSpeed = Velocity.Size2D();
-	bIsMovingOnGround = MovementComponent->IsMovingOnGround();
 	bHasVelocity = GroundSpeed > KINDA_SMALL_NUMBER;
 
 	// 加速度：角色正在提供移动输入时为 true（而非滑行/减速）
@@ -119,6 +118,9 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsCrouching = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Crouching);
 		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
 	}
+
+	UpdateJumpFallingState();
+
 }
 
 void UDeltaAnimInstance::UpdateAimOffset()
@@ -163,6 +165,54 @@ void UDeltaAnimInstance::UpdateCardinalDirection()
 	{
 		CardinalDirection = ECardinalDirection::Back;
 	}
+}
+
+void UDeltaAnimInstance::UpdateJumpFallingState()
+{
+	bIsMovingOnGround = MovementComponent->IsMovingOnGround();
+
+	if (MovementComponent->MovementMode == EMovementMode::MOVE_Falling)
+	{
+		if(Velocity.Z > 0.0f)
+		{
+			bIsJumping = true;
+			bIsFalling = false;
+		}
+		else
+		{
+			bIsJumping = false;
+			bIsFalling = true;
+		}
+	}
+	else
+	{
+		bIsJumping = false;
+		bIsFalling = false;
+	}
+
+	if (bIsJumping)
+	{
+		JumpApexTime = Velocity.Z * -1.0f / GetWorld()->GetGravityZ();
+	}
+	else
+	{
+		JumpApexTime = 0.0f;
+	}
+
+	if (bIsFalling)
+	{
+		if (MovementComponent)
+		{
+			FFindFloorResult FloorResult;
+			MovementComponent->ComputeFloorDist(Character->GetActorLocation(), 0.0f, 10000.f, FloorResult, 1.0f);
+			GroundDistance = FloorResult.FloorDist;
+		}
+	}
+	else
+	{
+		GroundDistance = 0.f;
+	}
+
 }
 
 void UDeltaAnimInstance::UpdateRootYawOffset(float DeltaSeconds)
