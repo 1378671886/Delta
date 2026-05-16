@@ -6,6 +6,7 @@
 #include "AbilitySystem/DeltaGameplayTags.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(DeltaAnimInstance)
 
@@ -13,6 +14,8 @@ UDeltaAnimInstance::UDeltaAnimInstance(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 	, PreviousActorYaw(0.0f)
 	, RootYawOffsetMode(ERootYawOffsetMode::BlendOut)
+	, AimYawOffset(0.0f)
+	, AimPitchOffset(0.0f)
 {
 }
 
@@ -103,6 +106,9 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	UpdateRootYawOffset(DeltaSeconds);
 
+	// 瞄准偏移：Controller朝向与角色朝向的差值
+	UpdateAimOffset();
+
 	AdjustedDirection = MovementDirection - RootYawOffset;
 
 	UpdateCardinalDirection();
@@ -112,6 +118,30 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		bIsCrouching = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Crouching);
 		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
+	}
+}
+
+void UDeltaAnimInstance::UpdateAimOffset()
+{
+	const AController* Controller = Character->GetController();
+	if (Controller)
+	{
+		const FRotator ControlRotation = Controller->GetControlRotation();
+		const float ActorYaw = Character->GetActorRotation().Yaw;
+		const float BodyYaw = ActorYaw + RootYawOffset;
+		AimYawOffset = FMath::FindDeltaAngleDegrees(BodyYaw, ControlRotation.Yaw);
+		AimPitchOffset = ControlRotation.Pitch;
+		if (AimPitchOffset > 90.f)
+		{
+			FVector2D InRange(270.f, 360.f);
+			FVector2D OutRange(-90.f, 0.f);
+			AimPitchOffset = FMath::GetMappedRangeValueClamped(InRange, OutRange, AimPitchOffset);
+		}
+	}
+	else
+	{
+		AimYawOffset = 0.0f;
+		AimPitchOffset = 0.0f;
 	}
 }
 

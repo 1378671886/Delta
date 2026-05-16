@@ -44,6 +44,7 @@ public:
 	//~UAnimInstance interface
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	void UpdateAimOffset();
 	//~End of UAnimInstance interface
 
 protected:
@@ -108,6 +109,14 @@ protected:
 	// 累计Yaw偏移，归一化到[-180, 180]，用于AnimBP旋转根骨骼实现原地转身
 	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
 	float RootYawOffset;
+
+	// 瞄准偏移 Yaw
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	float AimYawOffset;
+
+	// 瞄准偏移 Pitch
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	float AimPitchOffset;
 
 	// RootYawOffset的累积/保持/混出模式
 	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
