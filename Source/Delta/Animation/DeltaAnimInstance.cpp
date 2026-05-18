@@ -56,6 +56,8 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 蹲伏——直接从MovementComponent读取
 	bIsCrouching = MovementComponent->IsCrouching();
+	bCrouchStateChanged = (bIsCrouching != bWasCrouching);
+	bWasCrouching = bIsCrouching;
 
 	// Tag驱动——手动查ASC（C++属性无法在编辑器PropertyMap下拉框中选取）
 	if (AbilitySystemComponent)

@@ -106,6 +106,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsCrouching;
 
+	// 蹲伏状态变化帧为true——AnimBP中驱动蹲下/站起过渡动画
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	bool bCrouchStateChanged;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsSprinting;
 
@@ -170,4 +174,5 @@ protected:
 private:
 	float PreviousActorYaw;
 	FFloatSpringState RootYawSpringState;
+	bool bWasCrouching = false;
 };
