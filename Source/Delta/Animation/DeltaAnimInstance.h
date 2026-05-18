@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Animation/AnimInstance.h"
+#include "GameplayEffectTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DeltaAnimInstance.generated.h"
 
@@ -26,6 +27,7 @@ enum class ERootYawOffsetMode : uint8
 class ADeltaCharacter;
 class UCharacterMovementComponent;
 class UDeltaAbilitySystemComponent;
+class UCameraComponent;
 
 /**
  * UDeltaAnimInstance
@@ -41,11 +43,9 @@ class DELTA_API UDeltaAnimInstance : public UAnimInstance
 public:
 	UDeltaAnimInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	//~UAnimInstance interface
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void UpdateAimOffset();
-	//~End of UAnimInstance interface
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
@@ -56,6 +56,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	TObjectPtr<UDeltaAbilitySystemComponent> AbilitySystemComponent;
+
+	// Tag→Property 自动映射（Lyra-style）：在AnimBP的ClassDefaults中配置Tag与属性的对应关系
+	UPROPERTY(EditDefaultsOnly, Category = "GameplayTags")
+	FGameplayTagBlueprintPropertyMap GameplayTagPropertyMap;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	TObjectPtr<UCameraComponent> CameraComponent;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	FVector Velocity;
@@ -148,6 +155,17 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
 	float GroundDistance;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	bool bNeedTurnInPlace = false;
+
+	void UpdateLookAtData();
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	FVector CameraLocation;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
+	bool bNeedLookAt = false;
 
 private:
 	float PreviousActorYaw;

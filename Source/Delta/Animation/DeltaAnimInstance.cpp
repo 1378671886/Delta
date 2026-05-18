@@ -7,15 +7,16 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "Camera/CameraComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(DeltaAnimInstance)
 
 UDeltaAnimInstance::UDeltaAnimInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, PreviousActorYaw(0.0f)
-	, RootYawOffsetMode(ERootYawOffsetMode::BlendOut)
 	, AimYawOffset(0.0f)
 	, AimPitchOffset(0.0f)
+	, RootYawOffsetMode(ERootYawOffsetMode::BlendOut)
+	, PreviousActorYaw(0.0f)
 {
 }
 
@@ -30,6 +31,7 @@ void UDeltaAnimInstance::NativeInitializeAnimation()
 		{
 			MovementComponent = Character->GetCharacterMovement();
 			AbilitySystemComponent = Character->GetDeltaAbilitySystemComponent();
+			GameplayTagPropertyMap.Initialize(this, AbilitySystemComponent);
 			PreviousActorYaw = Character->GetActorRotation().Yaw;
 		}
 	}
@@ -46,42 +48,42 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	// 速度
 	Velocity = MovementComponent->Velocity;
 	Acceleration = MovementComponent->GetCurrentAcceleration();
 	GroundSpeed = Velocity.Size2D();
 	bHasVelocity = GroundSpeed > KINDA_SMALL_NUMBER;
-
-	// 加速度：角色正在提供移动输入时为 true（而非滑行/减速）
 	bHasAcceleration = MovementComponent->GetCurrentAcceleration().SizeSquared() > 0.0f;
 
-	// 本地加速度方向
-	{
-		const FVector Accel2D = MovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
-		const FRotator ActorRotation = Character->GetActorRotation();
-		const FVector LocalDir = ActorRotation.UnrotateVector(Accel2D);
-		LocalAcceleration2D = FVector2D(LocalDir.X, LocalDir.Y);
+	// 蹲伏——直接从MovementComponent读取
+	bIsCrouching = MovementComponent->IsCrouching();
 
-		// 加速度基准的转身方向：与输入方向相反
-		{
-			const float AccelAngle = FMath::RadiansToDegrees(FMath::Atan2(LocalAcceleration2D.Y, LocalAcceleration2D.X));
-			if (AccelAngle >= -45.0f && AccelAngle <= 45.0f)
-			{
-				PivotDirection = ECardinalDirection::Back;
-			}
-			else if (AccelAngle > 45.0f && AccelAngle <= 135.0f)
-			{
-				PivotDirection = ECardinalDirection::Left;
-			}
-			else if (AccelAngle < -45.0f && AccelAngle >= -135.0f)
-			{
-				PivotDirection = ECardinalDirection::Right;
-			}
-			else
-			{
-				PivotDirection = ECardinalDirection::Front;
-			}
-		}
+	// Tag驱动——手动查ASC（C++属性无法在编辑器PropertyMap下拉框中选取）
+	if (AbilitySystemComponent)
+	{
+		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
+	}
+
+	const FVector Accel2D = MovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
+	const FRotator ActorRotation = Character->GetActorRotation();
+	const FVector LocalDir = ActorRotation.UnrotateVector(Accel2D);
+	LocalAcceleration2D = FVector2D(LocalDir.X, LocalDir.Y);
+
+	const float AccelAngle = FMath::RadiansToDegrees(FMath::Atan2(LocalAcceleration2D.Y, LocalAcceleration2D.X));
+	if (AccelAngle >= -45.0f && AccelAngle <= 45.0f)
+	{
+		PivotDirection = ECardinalDirection::Back;
+	}
+	else if (AccelAngle > 45.0f && AccelAngle <= 135.0f)
+	{
+		PivotDirection = ECardinalDirection::Left;
+	}
+	else if (AccelAngle < -45.0f && AccelAngle >= -135.0f)
+	{
+		PivotDirection = ECardinalDirection::Right;
+	}
+	else
+	{
+		PivotDirection = ECardinalDirection::Front;
 	}
 
 	DisplacementSinceLastUpdate = GroundSpeed * DeltaSeconds;
@@ -89,7 +91,6 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 相对角色朝向的移动方向
 	if (GroundSpeed > KINDA_SMALL_NUMBER)
 	{
-		const FRotator ActorRotation = Character->GetActorRotation();
 		const FVector VelocityDirection = Velocity.GetSafeNormal2D();
 		const FVector LocalDirection = ActorRotation.UnrotateVector(VelocityDirection);
 
@@ -104,22 +105,13 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	UpdateRootYawOffset(DeltaSeconds);
-
-	// 瞄准偏移：Controller朝向与角色朝向的差值
 	UpdateAimOffset();
 
 	AdjustedDirection = MovementDirection - RootYawOffset;
 
 	UpdateCardinalDirection();
-
-	// GameplayTag驱动的状态
-	if (AbilitySystemComponent)
-	{
-		bIsCrouching = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Crouching);
-		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
-	}
-
 	UpdateJumpFallingState();
+	UpdateLookAtData();
 
 }
 
@@ -128,16 +120,28 @@ void UDeltaAnimInstance::UpdateAimOffset()
 	const AController* Controller = Character->GetController();
 	if (Controller)
 	{
-		const FRotator ControlRotation = Controller->GetControlRotation();
-		const float ActorYaw = Character->GetActorRotation().Yaw;
-		const float BodyYaw = ActorYaw + RootYawOffset;
-		AimYawOffset = FMath::FindDeltaAngleDegrees(BodyYaw, ControlRotation.Yaw);
-		AimPitchOffset = ControlRotation.Pitch;
-		if (AimPitchOffset > 90.f)
+		if (!bNeedLookAt)
 		{
-			FVector2D InRange(270.f, 360.f);
-			FVector2D OutRange(-90.f, 0.f);
-			AimPitchOffset = FMath::GetMappedRangeValueClamped(InRange, OutRange, AimPitchOffset);
+			const FRotator ControlRotation = Controller->GetControlRotation();
+			const float ActorYaw = Character->GetActorRotation().Yaw;
+			const float BodyYaw = ActorYaw + RootYawOffset;
+			float InterpYawOffset;
+			float InterpPitchOffset;
+			InterpYawOffset = FMath::FindDeltaAngleDegrees(BodyYaw, ControlRotation.Yaw);
+			InterpPitchOffset = ControlRotation.Pitch;
+			if (InterpPitchOffset > 90.f)
+			{
+				FVector2D InRange(270.f, 360.f);
+				FVector2D OutRange(-90.f, 0.f);
+				InterpPitchOffset = FMath::GetMappedRangeValueClamped(InRange, OutRange, InterpPitchOffset);
+			}
+			AimYawOffset = FMath::FInterpTo(AimYawOffset, InterpYawOffset, DeltaTime, 5.0f);
+			AimPitchOffset = FMath::FInterpTo(AimPitchOffset, InterpPitchOffset, DeltaTime, 5.0f);
+		}
+		else
+		{
+			AimYawOffset = FMath::FInterpTo(AimYawOffset, 0.0f, DeltaTime, 5.0f);
+			AimPitchOffset = FMath::FInterpTo(AimPitchOffset, 0.0f, DeltaTime, 5.0f);
 		}
 	}
 	else
@@ -213,6 +217,24 @@ void UDeltaAnimInstance::UpdateJumpFallingState()
 		GroundDistance = 0.f;
 	}
 
+}
+
+void UDeltaAnimInstance::UpdateLookAtData()
+{
+	CameraComponent = Character->FindComponentByClass<UCameraComponent>();
+	if (CameraComponent)
+	{
+		CameraLocation = CameraComponent->GetComponentLocation();
+	}
+
+	if (!bNeedTurnInPlace && FMath::Abs(RootYawOffset) > 90.0f)
+	{
+		bNeedLookAt = true;
+	}
+	else
+	{
+		bNeedLookAt = false;
+	}
 }
 
 void UDeltaAnimInstance::UpdateRootYawOffset(float DeltaSeconds)
