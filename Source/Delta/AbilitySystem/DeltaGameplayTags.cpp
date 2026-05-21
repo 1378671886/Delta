@@ -11,13 +11,18 @@ namespace DeltaGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_AutoRun, "InputTag.AutoRun");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Jump, "InputTag.Jump");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Sprint, "InputTag.Sprint");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Interact, "InputTag.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Aim, "InputTag.Aim");
 
 	UE_DEFINE_GAMEPLAY_TAG(Status_Crouching, "Status.Crouching");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Aiming, "Status.Aiming");
 	UE_DEFINE_GAMEPLAY_TAG(Status_AutoRunning, "Status.AutoRunning");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Sprinting, "Status.Sprinting");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Jump, "Ability.Jump");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint, "Ability.Sprint");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Aim, "Ability.Aim");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_MovementStopped, "Gameplay.MovementStopped");
 

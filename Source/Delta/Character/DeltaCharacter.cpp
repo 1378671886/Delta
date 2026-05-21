@@ -6,6 +6,7 @@
 #include "AbilitySystem/DeltaGameplayTags.h"
 #include "Character/DeltaPawnData.h"
 #include "Components/DeltaCharacterMovementComponent.h"
+#include "Components/DeltaEquipmentManagerComponent.h"
 #include "Components/DeltaHeroComponent.h"
 #include "Player/DeltaPlayerState.h"
 #include "Components/CapsuleComponent.h"
@@ -57,6 +58,9 @@ ADeltaCharacter::ADeltaCharacter(const FObjectInitializer& ObjectInitializer)
 
 	// Hero Component
 	HeroComponent = CreateDefaultSubobject<UDeltaHeroComponent>(TEXT("HeroComponent"));
+
+	// Equipment Manager Component
+	EquipmentManagerComponent = CreateDefaultSubobject<UDeltaEquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
 
 	// Controller rotation
 	bUseControllerRotationPitch = false;
@@ -128,6 +132,15 @@ void ADeltaCharacter::ToggleCrouch()
 	{
 		Crouch();
 	}
+}
+
+bool ADeltaCharacter::TryInteract()
+{
+	if (EquipmentManagerComponent)
+	{
+		return EquipmentManagerComponent->TryPickUpWeapon();
+	}
+	return false;
 }
 
 void ADeltaCharacter::BeginPlay()

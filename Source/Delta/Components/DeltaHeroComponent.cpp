@@ -58,6 +58,62 @@ APawn* UDeltaHeroComponent::GetPawn() const
 	return Cast<APawn>(GetOwner());
 }
 
+UEnhancedInputLocalPlayerSubsystem* UDeltaHeroComponent::GetInputSubsystem() const
+{
+	const APawn* Pawn = GetPawn();
+	if (!Pawn)
+	{
+		return nullptr;
+	}
+
+	const APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+	if (!PC)
+	{
+		return nullptr;
+	}
+
+	const ULocalPlayer* LP = PC->GetLocalPlayer();
+	if (!LP)
+	{
+		return nullptr;
+	}
+
+	return LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+}
+
+void UDeltaHeroComponent::AddEquipmentInputMapping(UInputMappingContext* IMC)
+{
+	if (!IMC || ActiveEquipmentIMCs.Contains(IMC))
+	{
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetInputSubsystem();
+	if (!Subsystem)
+	{
+		return;
+	}
+
+	Subsystem->AddMappingContext(IMC, 1);
+	ActiveEquipmentIMCs.Add(IMC);
+}
+
+void UDeltaHeroComponent::RemoveEquipmentInputMapping(UInputMappingContext* IMC)
+{
+	if (!IMC)
+	{
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetInputSubsystem();
+	if (Subsystem)
+	{
+		Subsystem->RemoveMappingContext(IMC);
+	}
+
+	ActiveEquipmentIMCs.Remove(IMC);
+}
+
 void UDeltaHeroComponent::InitializePlayerInput(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);

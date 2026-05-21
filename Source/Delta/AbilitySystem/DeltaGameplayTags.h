@@ -14,8 +14,11 @@ namespace DeltaGameplayTags
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_AutoRun);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Jump);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Sprint);
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact);
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Aim);
 
 	// Status Tags
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Aiming);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Crouching);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AutoRunning);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Sprinting);
@@ -23,6 +26,8 @@ namespace DeltaGameplayTags
 	// Ability Tags — used in AbilityTags on GA blueprints for blocking/cancellation
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Jump);
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint);
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
+	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Aim);
 
 	// Movement control — set by GAS abilities to freeze movement
 	DELTA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Gameplay_MovementStopped);

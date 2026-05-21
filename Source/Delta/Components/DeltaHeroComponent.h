@@ -8,6 +8,7 @@
 #include "DeltaHeroComponent.generated.h"
 
 class UDeltaInputConfig;
+class UEnhancedInputLocalPlayerSubsystem;
 class UInputMappingContext;
 
 UCLASS(MinimalAPI, Blueprintable, Meta = (BlueprintSpawnableComponent))
@@ -31,6 +32,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Delta|Hero")
 	static UDeltaHeroComponent* FindHeroComponent(const AActor* Actor);
 
+	// Manage equipment-specific input mappings that override default mappings
+	void AddEquipmentInputMapping(UInputMappingContext* IMC);
+	void RemoveEquipmentInputMapping(UInputMappingContext* IMC);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -46,4 +51,8 @@ protected:
 
 private:
 	APawn* GetPawn() const;
+	UEnhancedInputLocalPlayerSubsystem* GetInputSubsystem() const;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UInputMappingContext>> ActiveEquipmentIMCs;
 };

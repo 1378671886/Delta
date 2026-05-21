@@ -8,6 +8,7 @@
 #include "DeltaCharacter.generated.h"
 
 class UDeltaAbilitySystemComponent;
+class UDeltaEquipmentManagerComponent;
 class UDeltaHeroComponent;
 class UDeltaCharacterMovementComponent;
 class UDeltaPawnData;
@@ -36,6 +37,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
 	void ToggleCrouch();
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
+	bool TryInteract();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Delta|Character")
+	TObjectPtr<UDeltaEquipmentManagerComponent> EquipmentManagerComponent;
 
 protected:
 	//~AActor
