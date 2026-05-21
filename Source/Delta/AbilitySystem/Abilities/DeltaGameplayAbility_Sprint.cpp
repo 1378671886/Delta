@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DeltaGameplayAbility_Sprint.h"
+#include "Character/DeltaCharacter.h"
 #include "AbilitySystem/DeltaAbilitySystemComponent.h"
 #include "AbilitySystem/DeltaGameplayTags.h"
 
@@ -17,6 +18,15 @@ UDeltaGameplayAbility_Sprint::UDeltaGameplayAbility_Sprint(const FObjectInitiali
 void UDeltaGameplayAbility_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	// Sprinting cancels crouch
+	if (ADeltaCharacter* DeltaCharacter = GetDeltaCharacterFromActorInfo())
+	{
+		if (DeltaCharacter->bIsCrouched)
+		{
+			DeltaCharacter->UnCrouch();
+		}
+	}
 
 	if (UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponentFromActorInfo())
 	{

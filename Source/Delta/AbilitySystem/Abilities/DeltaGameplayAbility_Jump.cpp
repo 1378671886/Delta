@@ -48,8 +48,14 @@ void UDeltaGameplayAbility_Jump::CharacterJumpStart()
 	{
 		if (DeltaCharacter->IsLocallyControlled() && !DeltaCharacter->bPressedJump)
 		{
-			DeltaCharacter->UnCrouch();
-			DeltaCharacter->Jump();
+			if (DeltaCharacter->bIsCrouched)
+			{
+				DeltaCharacter->UnCrouch();
+			}
+			else
+			{
+				DeltaCharacter->Jump();
+			}
 		}
 	}
 }

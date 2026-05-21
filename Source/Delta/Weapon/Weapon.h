@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class UAnimInstance;
 class UBoxComponent;
 class UInputMappingContext;
 
@@ -29,6 +30,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Input")
 	TObjectPtr<UInputMappingContext> EquipmentInputMapping;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TSubclassOf<UAnimInstance> EquipmentAnimLayer;
 
 	FDeltaAbilitySet_GrantedHandles GrantedHandles;
 

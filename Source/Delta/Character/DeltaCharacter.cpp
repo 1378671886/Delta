@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DeltaCharacter.h"
+#include "Animation/DeltaAnimInstance.h"
 #include "AbilitySystem/DeltaAbilitySystemComponent.h"
 #include "AbilitySystem/DeltaAbilitySet.h"
 #include "AbilitySystem/DeltaGameplayTags.h"
@@ -130,6 +131,13 @@ void ADeltaCharacter::ToggleCrouch()
 	}
 	else if (MoveComp->IsMovingOnGround())
 	{
+		if (UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponent())
+		{
+			if (ASC->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting))
+			{
+				return;
+			}
+		}
 		Crouch();
 	}
 }
@@ -195,6 +203,15 @@ void ADeltaCharacter::OnAbilitySystemInitialized()
 	if (UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponent())
 	{
 		InitializeGameplayTags();
+
+		// Re-initialize AnimInstance tag-to-property mapping now that ASC is ready
+		if (USkeletalMeshComponent* CharacterMesh = GetMesh())
+		{
+			if (UDeltaAnimInstance* AnimInst = Cast<UDeltaAnimInstance>(CharacterMesh->GetAnimInstance()))
+			{
+				AnimInst->InitializeWithAbilitySystem(ASC);
+			}
+		}
 	}
 
 	// Grant abilities from PawnData (configured per-character via BP)
@@ -300,6 +317,5 @@ void ADeltaCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeight
 
 bool ADeltaCharacter::CanJumpInternal_Implementation() const
 {
-	// Same as ACharacter but without crouch check — allows jumping while crouched
 	return JumpIsAllowedInternal();
 }

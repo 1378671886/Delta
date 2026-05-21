@@ -47,6 +47,9 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void UpdateAimOffset();
 
+	// Re-initialize tag-to-property mapping when ASC becomes available
+	void InitializeWithAbilitySystem(UDeltaAbilitySystemComponent* ASC);
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	TObjectPtr<ADeltaCharacter> Character;
@@ -113,6 +116,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsSprinting;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	bool bIsAiming;
+
+	// 任意状态变化帧为true（瞄准/冲刺/蹲伏等），AnimBP中做Start→Cycle / Stop→Idle过渡条件
+	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	bool bStatusChanged;
+
 	// 每帧Yaw旋转增量（度），正值右转，负值左转
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	float RootYawDelta;
@@ -174,5 +184,7 @@ protected:
 private:
 	float PreviousActorYaw;
 	FFloatSpringState RootYawSpringState;
+	bool bWasAiming = false;
+	bool bWasSprinting = false;
 	bool bWasCrouching = false;
 };

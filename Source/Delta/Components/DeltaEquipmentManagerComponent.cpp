@@ -4,6 +4,7 @@
 #include "Components/DeltaHeroComponent.h"
 #include "Weapon/Weapon.h"
 #include "Components/BoxComponent.h"
+#include "Animation/AnimInstance.h"
 #include "AbilitySystem/DeltaAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "EngineUtils.h"
@@ -76,6 +77,15 @@ void UDeltaEquipmentManagerComponent::EquipWeapon(AWeapon* Weapon)
 		}
 	}
 
+	// Link weapon animation layer
+	if (Weapon->EquipmentAnimLayer)
+	{
+		if (UAnimInstance* AnimInstance = CharacterMesh->GetAnimInstance())
+		{
+			AnimInstance->LinkAnimClassLayers(Weapon->EquipmentAnimLayer);
+		}
+	}
+
 	EquippedWeapons.Add(Weapon);
 }
 
@@ -89,6 +99,22 @@ void UDeltaEquipmentManagerComponent::UnequipWeapon(AWeapon* Weapon)
 	if (!EquippedWeapons.Contains(Weapon))
 	{
 		return;
+	}
+
+	// Unlink weapon animation layer
+	if (Weapon->EquipmentAnimLayer)
+	{
+		ACharacter* Character = Cast<ACharacter>(GetOwner());
+		if (Character)
+		{
+			if (USkeletalMeshComponent* CharacterMesh = Character->GetMesh())
+			{
+				if (UAnimInstance* AnimInstance = CharacterMesh->GetAnimInstance())
+				{
+					AnimInstance->UnlinkAnimClassLayers(Weapon->EquipmentAnimLayer);
+				}
+			}
+		}
 	}
 
 	// Remove weapon input mapping

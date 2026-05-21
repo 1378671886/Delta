@@ -30,11 +30,20 @@ void UDeltaAnimInstance::NativeInitializeAnimation()
 		if (Character)
 		{
 			MovementComponent = Character->GetCharacterMovement();
-			AbilitySystemComponent = Character->GetDeltaAbilitySystemComponent();
-			GameplayTagPropertyMap.Initialize(this, AbilitySystemComponent);
 			PreviousActorYaw = Character->GetActorRotation().Yaw;
 		}
 	}
+}
+
+void UDeltaAnimInstance::InitializeWithAbilitySystem(UDeltaAbilitySystemComponent* ASC)
+{
+	if (!ASC)
+	{
+		return;
+	}
+
+	AbilitySystemComponent = ASC;
+	GameplayTagPropertyMap.Initialize(this, AbilitySystemComponent);
 }
 
 void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -60,10 +69,19 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bWasCrouching = bIsCrouching;
 
 	// Tag驱动——手动查ASC（C++属性无法在编辑器PropertyMap下拉框中选取）
+	bStatusChanged = false;
 	if (AbilitySystemComponent)
 	{
 		bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting);
+		bIsAiming = AbilitySystemComponent->HasMatchingGameplayTag(DeltaGameplayTags::Status_Aiming);
 	}
+
+	if (bIsAiming != bWasAiming || bIsSprinting != bWasSprinting || bCrouchStateChanged)
+	{
+		bStatusChanged = true;
+	}
+	bWasAiming = bIsAiming;
+	bWasSprinting = bIsSprinting;
 
 	const FVector Accel2D = MovementComponent->GetCurrentAcceleration().GetSafeNormal2D();
 	const FRotator ActorRotation = Character->GetActorRotation();
