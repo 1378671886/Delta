@@ -26,6 +26,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Delta|Sprint")
 	float MaxSprintSpeed = 1200.0f;
 
+	// ADS walk speed in cm/s. Default 300 (3 m/s).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Delta|Aim")
+	float MaxAimSpeed = 300.0f;
+
 protected:
 	virtual void InitializeComponent() override;
 };

@@ -7,11 +7,15 @@
 #include "AbilitySystem/DeltaGameplayTags.h"
 #include "Character/DeltaPawnData.h"
 #include "Components/DeltaCharacterMovementComponent.h"
+#include "Components/DeltaCombatComponent.h"
 #include "Components/DeltaEquipmentManagerComponent.h"
 #include "Components/DeltaHeroComponent.h"
 #include "Player/DeltaPlayerState.h"
+#include "Weapon/Weapon.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Input/DeltaEnhancedInputComponent.h"
 
@@ -59,6 +63,9 @@ ADeltaCharacter::ADeltaCharacter(const FObjectInitializer& ObjectInitializer)
 
 	// Hero Component
 	HeroComponent = CreateDefaultSubobject<UDeltaHeroComponent>(TEXT("HeroComponent"));
+
+	// Combat Component
+	CombatComponent = CreateDefaultSubobject<UDeltaCombatComponent>(TEXT("CombatComponent"));
 
 	// Equipment Manager Component
 	EquipmentManagerComponent = CreateDefaultSubobject<UDeltaEquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
@@ -154,6 +161,9 @@ bool ADeltaCharacter::TryInteract()
 void ADeltaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CameraComponent = FindComponentByClass<UCameraComponent>();
+	SpringArmComponent = FindComponentByClass<USpringArmComponent>();
 }
 
 void ADeltaCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -318,4 +328,65 @@ void ADeltaCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeight
 bool ADeltaCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
+}
+
+AWeapon* ADeltaCharacter::GetEquippedWeapon() const
+{
+	if (EquipmentManagerComponent)
+	{
+		const TArray<AWeapon*> Weapons = EquipmentManagerComponent->GetEquippedWeapons();
+		if (!Weapons.IsEmpty())
+		{
+			return Weapons[0];
+		}
+	}
+	return nullptr;
+}
+
+void ADeltaCharacter::SetHeadVisibleToOwner(bool bVisible)
+{
+	TArray<USkeletalMeshComponent*> MeshComponents;
+	GetComponents<USkeletalMeshComponent>(MeshComponents);
+	for (USkeletalMeshComponent* MeshComp : MeshComponents)
+	{
+		if (MeshComp && MeshComp->ComponentHasTag(TEXT("Head")))
+		{
+			MeshComp->SetOwnerNoSee(!bVisible);
+			break;
+		}
+	}
+}
+
+void ADeltaCharacter::ToggleAim()
+{
+	UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponent();
+	if (!ASC)
+	{
+		return;
+	}
+
+	if (ASC->HasMatchingGameplayTag(DeltaGameplayTags::Status_Aiming))
+	{
+		// Cancel active aim ability
+		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			if (Spec.IsActive() && Spec.GetDynamicSpecSourceTags().HasTag(DeltaGameplayTags::InputTag_Aim))
+			{
+				ASC->CancelAbilityHandle(Spec.Handle);
+				return;
+			}
+		}
+	}
+	else
+	{
+		// Activate aim ability
+		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			if (Spec.GetDynamicSpecSourceTags().HasTag(DeltaGameplayTags::InputTag_Aim))
+			{
+				ASC->TryActivateAbility(Spec.Handle);
+				return;
+			}
+		}
+	}
 }

@@ -116,7 +116,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
 	bool bIsSprinting;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Delta|Anim")
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
 	bool bIsAiming;
 
 	// 任意状态变化帧为true（瞄准/冲刺/蹲伏等），AnimBP中做Start→Cycle / Stop→Idle过渡条件
@@ -180,6 +180,14 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim")
 	bool bNeedLookAt = false;
+
+	void UpdateIKHandGun();
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim|ADS")
+	FVector ADSIKHandGunLocation;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Delta|Anim|ADS")
+	FRotator ADSIKHandGunRotation;
 
 private:
 	float PreviousActorYaw;

@@ -55,7 +55,7 @@ void UDeltaEquipmentManagerComponent::EquipWeapon(AWeapon* Weapon)
 	}
 
 	Weapon->SetOwner(Character);
-	Weapon->WeaponMesh->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("hand_r_socket"));
+	Weapon->WeaponMesh->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("firearm_socket"));
 	Weapon->CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Weapon->SetActorEnableCollision(false);
 
@@ -194,17 +194,7 @@ TArray<AWeapon*> UDeltaEquipmentManagerComponent::GetEquippedWeapons() const
 	return Result;
 }
 
-AWeapon* UDeltaEquipmentManagerComponent::GetFirstWeaponOfType(TSubclassOf<AWeapon> WeaponType) const
-{
-	for (const TObjectPtr<AWeapon>& Weapon : EquippedWeapons)
-	{
-		if (Weapon.Get() != nullptr && Weapon->IsA(WeaponType))
-		{
-			return Weapon.Get();
-		}
-	}
-	return nullptr;
-}
+
 
 UDeltaAbilitySystemComponent* UDeltaEquipmentManagerComponent::GetAbilitySystemComponent() const
 {

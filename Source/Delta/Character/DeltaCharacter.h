@@ -8,10 +8,14 @@
 #include "DeltaCharacter.generated.h"
 
 class UDeltaAbilitySystemComponent;
+class UDeltaCombatComponent;
 class UDeltaEquipmentManagerComponent;
 class UDeltaHeroComponent;
 class UDeltaCharacterMovementComponent;
 class UDeltaPawnData;
+class UCameraComponent;
+class USpringArmComponent;
+class AWeapon;
 
 UCLASS(MinimalAPI, Config = Game)
 class ADeltaCharacter : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
@@ -40,6 +44,24 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
 	bool TryInteract();
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
+	void ToggleAim();
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
+	void SetHeadVisibleToOwner(bool bVisible);
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
+	UCameraComponent* GetCameraComponent() const { return CameraComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Character")
+	USpringArmComponent* GetSpringArmComponent() const { return SpringArmComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "Delta|Equipment")
+	AWeapon* GetEquippedWeapon() const;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Delta|Character")
+	TObjectPtr<UDeltaCombatComponent> CombatComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Delta|Character")
 	TObjectPtr<UDeltaEquipmentManagerComponent> EquipmentManagerComponent;
@@ -76,4 +98,10 @@ private:
 	// Pawn data used to grant abilities and configure input for this character.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Delta|Pawn", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<const UDeltaPawnData> PawnData;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCameraComponent> CameraComponent;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USpringArmComponent> SpringArmComponent;
 };

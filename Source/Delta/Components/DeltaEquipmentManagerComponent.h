@@ -32,8 +32,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Equipment")
 	bool HasNearbyWeapon() const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Equipment")
-	AWeapon* GetFirstWeaponOfType(TSubclassOf<AWeapon> WeaponType) const;
 
 protected:
 	virtual void BeginPlay() override;

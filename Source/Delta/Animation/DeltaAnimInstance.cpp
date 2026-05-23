@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
+#include "Weapon/Weapon.h"
+#include "Components/DeltaCombatComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(DeltaAnimInstance)
 
@@ -132,6 +134,7 @@ void UDeltaAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	UpdateCardinalDirection();
 	UpdateJumpFallingState();
 	UpdateLookAtData();
+	UpdateIKHandGun();
 
 }
 
@@ -255,6 +258,43 @@ void UDeltaAnimInstance::UpdateLookAtData()
 	{
 		bNeedLookAt = false;
 	}
+}
+
+void UDeltaAnimInstance::UpdateIKHandGun()
+{
+	FVector AimSocketLocation = FVector::ZeroVector;
+	FVector FPSCameraLocation = FVector::ZeroVector;
+	FRotator FPSCameraRotation = FRotator::ZeroRotator;
+	FVector IKHandGunLocation = FVector::ZeroVector;
+
+	const AWeapon* Weapon = Character ? Character->GetEquippedWeapon() : nullptr;
+	if (Weapon)
+	{
+		AimSocketLocation = Weapon->WeaponMesh->GetSocketLocation(FName("aim_socket"));
+	}
+
+	TArray<UCameraComponent*> Cameras;
+	Character->GetComponents<UCameraComponent>(Cameras);
+	for (const UCameraComponent* Cam : Cameras)
+	{
+		if (Cam && Cam->ComponentHasTag(FName("FPS")))
+		{
+			FPSCameraLocation = Cam->GetComponentLocation();
+			FPSCameraRotation = Cam->GetComponentRotation();
+			break;
+		}
+	}
+
+	IKHandGunLocation = Character->GetMesh()->GetSocketLocation(FName("ik_hand_gun"));
+	const FRotator IKHandGunRotation = Character->GetMesh()->GetSocketRotation(FName("ik_hand_gun"));
+
+	const float Alpha = Character->CombatComponent ? Character->CombatComponent->AimAlpha : 0.0f;
+	const FVector DeltaLocation = AimSocketLocation - FPSCameraLocation;
+	const FVector ADSTargetLocation = IKHandGunLocation - DeltaLocation;
+	const FRotator ADSTargetRotation = FRotator(-FPSCameraRotation.Pitch, FPSCameraRotation.Yaw + 180.0f, FPSCameraRotation.Roll);
+
+	ADSIKHandGunLocation = FMath::Lerp(IKHandGunLocation, ADSTargetLocation, Alpha);
+	ADSIKHandGunRotation = FMath::Lerp(IKHandGunRotation, ADSTargetRotation, Alpha);
 }
 
 void UDeltaAnimInstance::UpdateRootYawOffset(float DeltaSeconds)

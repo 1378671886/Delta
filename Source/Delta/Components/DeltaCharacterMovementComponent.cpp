@@ -39,6 +39,11 @@ float UDeltaCharacterMovementComponent::GetMaxSpeed() const
 			return 0.0f;
 		}
 
+		if (ASC->HasMatchingGameplayTag(DeltaGameplayTags::Status_Aiming))
+		{
+			return MaxAimSpeed;
+		}
+
 		if (ASC->HasMatchingGameplayTag(DeltaGameplayTags::Status_Sprinting))
 		{
 			return MaxSprintSpeed;
