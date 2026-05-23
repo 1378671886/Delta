@@ -288,13 +288,9 @@ void UDeltaAnimInstance::UpdateIKHandGun()
 	IKHandGunLocation = Character->GetMesh()->GetSocketLocation(FName("ik_hand_gun"));
 	const FRotator IKHandGunRotation = Character->GetMesh()->GetSocketRotation(FName("ik_hand_gun"));
 
-	const float Alpha = Character->CombatComponent ? Character->CombatComponent->AimAlpha : 0.0f;
 	const FVector DeltaLocation = AimSocketLocation - FPSCameraLocation;
-	const FVector ADSTargetLocation = IKHandGunLocation - DeltaLocation;
-	const FRotator ADSTargetRotation = FRotator(-FPSCameraRotation.Pitch, FPSCameraRotation.Yaw + 180.0f, FPSCameraRotation.Roll);
-
-	ADSIKHandGunLocation = FMath::Lerp(IKHandGunLocation, ADSTargetLocation, Alpha);
-	ADSIKHandGunRotation = FMath::Lerp(IKHandGunRotation, ADSTargetRotation, Alpha);
+	ADSIKHandGunLocation = IKHandGunLocation - DeltaLocation;
+	ADSIKHandGunRotation = FRotator(-FPSCameraRotation.Pitch, FPSCameraRotation.Yaw + 180.0f, FPSCameraRotation.Roll);
 }
 
 void UDeltaAnimInstance::UpdateRootYawOffset(float DeltaSeconds)
