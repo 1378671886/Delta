@@ -24,7 +24,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aim|Camera")
 	FName FPSCameraTag = TEXT("FPS");
 
-private:
+	void EnterFPS(ADeltaCharacter* Char);
+	void ExitFPS();
+
 	UPROPERTY()
 	TObjectPtr<UCameraComponent> FPSCamera;
 

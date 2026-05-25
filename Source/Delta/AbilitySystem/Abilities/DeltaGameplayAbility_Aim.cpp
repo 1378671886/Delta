@@ -31,7 +31,31 @@ void UDeltaGameplayAbility_Aim::ActivateAbility(const FGameplayAbilitySpecHandle
 		return;
 	}
 
-	// Switch to first-person camera
+	EnterFPS(Char);
+}
+
+void UDeltaGameplayAbility_Aim::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	if (ActivationPolicy == EDeltaAbilityActivationPolicy::WhileInputActive)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	}
+}
+
+void UDeltaGameplayAbility_Aim::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	if (UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponentFromActorInfo())
+	{
+		ASC->SetLooseGameplayTagCount(DeltaGameplayTags::Status_Aiming, 0);
+	}
+
+	ExitFPS();
+
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UDeltaGameplayAbility_Aim::EnterFPS(ADeltaCharacter* Char)
+{
 	TArray<UCameraComponent*> Cameras;
 	Char->GetComponents<UCameraComponent>(Cameras);
 
@@ -62,22 +86,8 @@ void UDeltaGameplayAbility_Aim::ActivateAbility(const FGameplayAbilitySpecHandle
 	}
 }
 
-void UDeltaGameplayAbility_Aim::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+void UDeltaGameplayAbility_Aim::ExitFPS()
 {
-	if (ActivationPolicy == EDeltaAbilityActivationPolicy::WhileInputActive)
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-	}
-}
-
-void UDeltaGameplayAbility_Aim::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	if (UDeltaAbilitySystemComponent* ASC = GetDeltaAbilitySystemComponentFromActorInfo())
-	{
-		ASC->SetLooseGameplayTagCount(DeltaGameplayTags::Status_Aiming, 0);
-	}
-
-	// Restore cameras to their pre-ADS state
 	if (FPSCamera && !bFPSWasActive)
 	{
 		FPSCamera->Deactivate();
@@ -94,6 +104,4 @@ void UDeltaGameplayAbility_Aim::EndAbility(const FGameplayAbilitySpecHandle Hand
 
 	FPSCamera = nullptr;
 	TPSCamera = nullptr;
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
