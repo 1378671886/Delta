@@ -7,6 +7,7 @@
 #include "DeltaCombatComponent.generated.h"
 
 class UDeltaAbilitySystemComponent;
+class UCameraComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DELTA_API UDeltaCombatComponent : public UActorComponent
@@ -16,13 +17,13 @@ class DELTA_API UDeltaCombatComponent : public UActorComponent
 public:
 	UDeltaCombatComponent();
 
-	// Time in seconds to fully transition into/out of ADS
+	// FOV when not aiming (hip-fire)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat|ADS")
-	float ADSTime = 0.15f;
+	float DefaultFOV = 90.0f;
 
-	// Current ADS blend alpha: 0 = hip-fire, 1 = fully aimed
-	UPROPERTY(BlueprintReadOnly, Category = "Combat|ADS")
-	float AimAlpha = 0.0f;
+	// FOV when fully aimed down sights
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat|ADS")
+	float ADSFOV = 60.0f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,4 +34,7 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<UDeltaAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> CameraComponent;
 };
