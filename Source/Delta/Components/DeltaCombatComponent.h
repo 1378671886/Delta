@@ -25,6 +25,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat|ADS")
 	float ADSFOV = 60.0f;
 
+	// Time to transition weapon from hip to ADS position
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat|ADS")
+	float ADSTime = 0.15f;
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -4,6 +4,8 @@
 #include "AbilitySystem/DeltaAbilitySystemComponent.h"
 #include "AbilitySystem/DeltaGameplayTags.h"
 #include "Character/DeltaCharacter.h"
+#include "Components/DeltaCombatComponent.h"
+#include "Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(DeltaGameplayAbility_Aim)
@@ -32,6 +34,7 @@ void UDeltaGameplayAbility_Aim::ActivateAbility(const FGameplayAbilitySpecHandle
 	}
 
 	EnterFPS(Char);
+	AttachWeaponToCamera(Char);
 }
 
 void UDeltaGameplayAbility_Aim::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
@@ -49,6 +52,10 @@ void UDeltaGameplayAbility_Aim::EndAbility(const FGameplayAbilitySpecHandle Hand
 		ASC->SetLooseGameplayTagCount(DeltaGameplayTags::Status_Aiming, 0);
 	}
 
+	GetWorld()->GetTimerManager().ClearTimer(WeaponBlendTimer);
+
+	ADeltaCharacter* Char = GetDeltaCharacterFromActorInfo();
+	AttachWeaponToMesh(Char);
 	ExitFPS();
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
@@ -104,4 +111,67 @@ void UDeltaGameplayAbility_Aim::ExitFPS()
 
 	FPSCamera = nullptr;
 	TPSCamera = nullptr;
+}
+
+void UDeltaGameplayAbility_Aim::AttachWeaponToCamera(ADeltaCharacter* Char)
+{
+	if (!FPSCamera || !Char)
+	{
+		return;
+	}
+
+	AWeapon* Weapon = Char->GetEquippedWeapon();
+	if (!Weapon)
+	{
+		return;
+	}
+
+	WeaponMesh = Weapon->WeaponMesh;
+	const FTransform WorldTransform = WeaponMesh->GetComponentTransform();
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	WeaponMesh->AttachToComponent(FPSCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	const FTransform CameraTransform = FPSCamera->GetComponentTransform();
+	WeaponBlendStartLoc = CameraTransform.InverseTransformPosition(WorldTransform.GetLocation());
+	WeaponBlendStartRot = CameraTransform.InverseTransformRotation(WorldTransform.GetRotation()).Rotator();
+
+	WeaponBlendAlpha = 0.0f;
+	GetWorld()->GetTimerManager().SetTimer(WeaponBlendTimer, this, &UDeltaGameplayAbility_Aim::TickWeaponBlend, 0.016f, true);
+}
+
+void UDeltaGameplayAbility_Aim::AttachWeaponToMesh(ADeltaCharacter* Char)
+{
+	if (!WeaponMesh || !Char)
+	{
+		return;
+	}
+
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	WeaponMesh->AttachToComponent(Char->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocket);
+	WeaponMesh = nullptr;
+}
+
+void UDeltaGameplayAbility_Aim::TickWeaponBlend()
+{
+	if (!WeaponMesh)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(WeaponBlendTimer);
+		return;
+	}
+
+	const ADeltaCharacter* Char = GetDeltaCharacterFromActorInfo();
+	const float Time = (Char && Char->CombatComponent) ? Char->CombatComponent->ADSTime : 0.15f;
+	WeaponBlendAlpha += 0.016f / Time;
+
+	if (WeaponBlendAlpha >= 1.0f)
+	{
+		WeaponBlendAlpha = 1.0f;
+		WeaponMesh->SetRelativeLocation(WeaponCameraOffset);
+		WeaponMesh->SetRelativeRotation(WeaponCameraRotation);
+		GetWorld()->GetTimerManager().ClearTimer(WeaponBlendTimer);
+		return;
+	}
+
+	WeaponMesh->SetRelativeLocation(FMath::Lerp(WeaponBlendStartLoc, WeaponCameraOffset, WeaponBlendAlpha));
+	WeaponMesh->SetRelativeRotation(FMath::Lerp(WeaponBlendStartRot, WeaponCameraRotation, WeaponBlendAlpha));
 }
