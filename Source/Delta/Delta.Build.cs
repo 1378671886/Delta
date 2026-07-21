@@ -10,7 +10,7 @@ public class Delta : ModuleRules
 
 		PublicIncludePaths.AddRange(new string[] { "Delta" });
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "GameplayTags", "GameplayTasks", "NetCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "GameplayTags", "GameplayTasks", "NetCore", "Inventory" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

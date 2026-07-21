@@ -139,7 +139,6 @@ void UDeltaHeroComponent::InitializePlayerInput(UInputComponent* PlayerInputComp
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 	check(Subsystem);
 
-	Subsystem->ClearAllMappings();
 	for (const TObjectPtr<UInputMappingContext>& IMC : DefaultInputMappings)
 	{
 		if (IMC)

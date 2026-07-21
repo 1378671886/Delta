@@ -352,6 +352,7 @@ void ADeltaCharacter::SetHeadVisibleToOwner(bool bVisible)
 		if (MeshComp && MeshComp->ComponentHasTag(TEXT("Head")))
 		{
 			MeshComp->SetOwnerNoSee(!bVisible);
+			MeshComp->bCastHiddenShadow = true;
 			break;
 		}
 	}
