@@ -5,8 +5,13 @@
 !.gitignore
 !.gitattributes
 
-# Only track Source and Config directories
+# Only track Source, Config, and Plugins directories
 !Source/
 !Source/**
 !Config/
 !Config/**
+!Plugins/
+!Plugins/**
+# Exclude build artifacts in Plugins
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
